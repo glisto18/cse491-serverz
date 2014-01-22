@@ -19,10 +19,11 @@ while True:
     c, (client_host, client_port) = s.accept()
     print c.recv(1000)
     print 'Got connection from', client_host, client_port
-    c.send('HTTP/1.0 200 OK\n')
-    c.send('Date: ' + time.asctime(time.gmtime()) + '\n')
-    c.send('Content-Type: text/html\n\n')
-    c.send('<html><body>')
-    c.send("<h1>Hello, world</h1> this is rucin11's Web server.")
-    c.send('</body></html>')
+    
+    # send a response
+    c.send('HTTP/1.0 200 OK\r\n')
+    c.send('Content-Type: text/html\r\n')
+    c.send('\r\n')
+    c.send("<h1>Hello, world</h1>.")
+    c.send('this is rucin11\'s Web server.')
     c.close()
