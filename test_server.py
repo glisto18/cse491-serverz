@@ -34,7 +34,7 @@ def test_handle_connection():
                       '\r\n' + \
 		      '<html><body>' + \
                       '<h1>Hello, world.</h1>' + \
-                      "This is rucins11's Web server.<BR>" + \
+                      "This is romanda1's Web server written by J. Rucinski. <BR>" + \
 		      "<A HREF='/content'>Content</A><BR>" + \
 		      "<A HREF='/file'>File</A><BR>" + \
 		      "<A HREF='/image'>Image</A>" + \
@@ -83,7 +83,7 @@ def test_handle_connection_post():
                       'Content-type: text/html\r\n' + \
                       '\r\n' + \
                       '<h1>Hello, world.</h1>' + \
-		      "This is rucins11's Web server. \r\n" + \
+		      "This is romanda1's Web server written by J. Rucinski. \r\n" + \
 		      'This is a POST.'
 
     server.handle_connection(conn)
