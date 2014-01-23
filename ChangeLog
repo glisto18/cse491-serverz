@@ -6,6 +6,10 @@
 
  * Added http response and 'Hello, world' display to web server.
  
- 2014-01-22 Justin Rucinski <rucins11@msu.edu>
+2014-01-22 Justin Rucinski <rucins11@msu.edu>
  
  * Matched server.py to the solution provided by ctb
+ 
+2014-01-22 Justin Rucinski <rucins11@msu.edu>
+
+ * Completed hw2. Updated server.py, test_server.py
