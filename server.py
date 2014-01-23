@@ -41,7 +41,7 @@ def handle_get(c,path):
                '\r\n')
 	c.send('<html><body>' + \
                '<h1>Hello, world.</h1>' + \
-               "This is rucins11's Web server.<BR>" + \
+               "This is romanda1's Web server written by J. Rucinski. <BR>" + \
 	       "<A HREF='/content'>Content</A><BR>" + \
                "<A HREF='/file'>File</A><BR>" + \
 	       "<A HREF='/image'>Image</A>" + \
@@ -71,7 +71,7 @@ def handle_post(c):
            'Content-type: text/html\r\n' + \
 	   '\r\n' + \
 	   '<h1>Hello, world.</h1>' + \
-	   "This is rucins11's Web server. \r\n" + \
+	   "This is romanda1's Web server written by J. Rucinski. \r\n" + \
 	   'This is a POST.')
 
 if __name__== '__main__':
