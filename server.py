@@ -51,7 +51,7 @@ def send200(conn):
 
 def index(conn, parsed_url, request):
     conn.send('<html><body>')
-    conn.send('<h1>Welcome to Brian\'s Web Server</h1>')
+    conn.send('<h1>Welcome to Dan\'s Web Server</h1>')
     conn.send('<div>')
     conn.send('<a href="/content">Content</a><br />')
     conn.send('<a href="/image">Image</a><br />')

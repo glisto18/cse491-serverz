@@ -35,7 +35,7 @@ def test_handle_connection():
                       'Content-type: text/html\r\n' + \
                       '\r\n' + \
                       '<html><body>' + \
-                      '<h1>Welcome to Brian\'s Web Server</h1>' + \
+                      '<h1>Welcome to Dan\'s Web Server</h1>' + \
                       '<div>' + \
                       '<a href="/content">Content</a><br />' + \
                       '<a href="/image">Image</a><br />' + \
@@ -102,13 +102,13 @@ def test_post():
     assert conn.sent == expected_return, 'Got: %s' % (repr(conn.sent),)
 
 def test_form_get():
-    conn = FakeConnection("GET /submit?firstname=Brian&lastname=Jurgess HTTP/1.0\r\n\r\n")
+    conn = FakeConnection("GET /submit?firstname=Dan&lastname=RomanHTTP/1.0\r\n\r\n")
 
     expected_return = 'HTTP/1.0 200 OK\r\n' + \
                       'Content-type: text/html\r\n' + \
                       '\r\n' + \
                       '<html><body>' + \
-                      'Hello Brian Jurgess.' + \
+                      'Hello Dan Roman.' + \
                       '</body></html>'
     
     server.handle_connection(conn)
@@ -116,13 +116,13 @@ def test_form_get():
     assert conn.sent == expected_return, 'Got: %s' % (repr(conn.sent),)
 
 def test_form_post():
-    conn = FakeConnection("POST /submitpost HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 32\r\n\r\nfirstname=Brian&lastname=Jurgess")
+    conn = FakeConnection("POST /submitpost HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 32\r\n\r\nfirstname=Dan&lastname=Roman")
 
     expected_return = 'HTTP/1.0 200 OK\r\n' + \
                       'Content-type: text/html\r\n' + \
                       '\r\n' + \
                       '<html><body>' + \
-                      'Hello Brian Jurgess.' + \
+                      'Hello Dan Roman.' + \
                       '</body></html>'
 
     server.handle_connection(conn)

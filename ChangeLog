@@ -16,3 +16,6 @@
  * Refactored handle_connection function, moving all the views into their
 	own respective functions
  * Added error pages for incorrect request type, and incorrect url
+
+2014-01-30 Daniel Roman
+ * Cloned repo.  All credit to Brian Jurgess.
