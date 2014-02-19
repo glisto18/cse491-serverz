@@ -3,12 +3,22 @@ import random
 import socket
 import time
 import urlparse
-import cgi
 import StringIO
-import jinja2
 import sys
-from app import make_app
+#from app import make_app
 import time
+
+import quixote
+from quixote.demo import create_publisher
+
+_the_app = None
+def make_app():
+    global _the_app
+    if _the_app is None:
+        p = create_publisher()
+        _the_app = quixote.get_wsgi_app()
+
+    return _the_app
 
 def createEnviron(conn):
     environ = {}
@@ -30,7 +40,8 @@ def createEnviron(conn):
         PATH = urlparse.urlparse(PATH)
         environ['PATH_INFO'] = PATH.path
         environ['QUERY_STRING'] = PATH.query
-
+        environ['SCRIPT_NAME'] = ''
+        
         return environ
 
     environ['REQUEST_METHOD'], PATH, \
@@ -40,7 +51,8 @@ def createEnviron(conn):
 
     environ['PATH_INFO'] = PATH.path
     environ['QUERY_STRING'] = PATH.query
-
+    environ['SCRIPT_NAME'] = ''
+    
     headers = headers_string.split('\r\n')
 
     headerDict = {}
@@ -51,9 +63,14 @@ def createEnviron(conn):
     if 'content-length' in headerDict.keys():
         environ['CONTENT_LENGTH'] = int(headerDict['content-length'])
         environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(headerDict['content-length'])))
+    else:
+        environ['CONTENT_LENGTH'] = ''
+        environ['wsgi.input'] = StringIO.StringIO()
 
     if 'content-type' in headerDict.keys():
-        environ['CONTENT_TYPE'] = headerDict['content-type']    
+        environ['CONTENT_TYPE'] = headerDict['content-type']
+    else:
+        environ['CONTENT_TYPE'] = ''
 
     return environ
 
