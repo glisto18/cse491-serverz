@@ -12,7 +12,7 @@ env = jinja2.Environment(loader=loader)
 
 
 def hw5_app(environ, start_response):
-	setup_testing_defaults(environ)
+	#setup_testing_defaults(environ)
 
 	status = '200 OK'
 	response_headers = [('Content-type', 'text/html')]
@@ -25,7 +25,7 @@ def hw5_app(environ, start_response):
 		status, response_headers, response = error_501(environ)
 
 	start_response(status, response_headers)
-	return response
+	return [response]
 
 def GetRequest(environ):
     if environ['PATH_INFO'] == '/':
@@ -42,6 +42,8 @@ def GetRequest(environ):
         return form_post_page(environ)
     elif environ['PATH_INFO'] == '/submit':
         return form_get_results_page(environ)
+    elif '.jpg' in environ['PATH_INFO'][-4:] or '.txt' in environ['PATH_INFO'][-4:]:
+        return form_get_image(environ)
     else:
         return error_404(environ)
 
@@ -52,6 +54,21 @@ def PostRequest(environ):
 	else:
 		return error_404(environ)
 
+
+def form_get_image(environ):
+    try:
+        fp = open('.%s' % environ['PATH_INFO'], 'rb')
+    except:
+        return error_404(environ)
+    data = fp.read()
+    fp.close()
+
+    if '.txt' in environ['PATH_INFO'][-4:]:
+        content_type = [('Content-type','text/plain')]
+    else:
+        content_type = [('Content-type','image/jpeg')]
+
+    return '200 OK', content_type, data
 
 def index(environ):
     return '200 OK', [('Content-type','text/html')], \
