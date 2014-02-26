@@ -5,23 +5,25 @@ import time
 import urlparse
 import StringIO
 import sys
-from app import make_app
+#from app import make_app
+import imageapp
 import time
 from wsgiref.validate import validator
 
-# import quixote
-# from quixote.demo import create_publisher
+import quixote
+#from quixote.demo import create_publisher
 #from quixote.demo.mini_demo import create_publisher
 #from quixote.demo.altdemo import create_publisher
 
-# _the_app = None
-# def make_app():
-#     global _the_app
-#     if _the_app is None:
-#         p = create_publisher()
-#         _the_app = quixote.get_wsgi_app()
+_the_app = None
+def make_app():
+    global _the_app
+    if _the_app is None:
+        imageapp.setup()
+        p = imageapp.create_publisher()
+        _the_app = quixote.get_wsgi_app()
 
-#     return _the_app
+    return _the_app
 
 
 def getRequest(conn):
@@ -94,6 +96,9 @@ def createEnviron(conn):
 
         if 'content-type' in headerDict.keys():
             environ['CONTENT_TYPE'] = headerDict['content-type']
+
+        if 'cookie' in headerDict.keys():
+            environ['HTTP_COOKIE'] = headerDict['cookie']
         
             
     return environ
