@@ -22,3 +22,8 @@
    into app.py
  * Updated handle_connection to behave like a wsgi server
  * Updated templates to extend a base template called "base.html"
+
+2014-02-26 Brian Jurgess
+ * Implemented cookie handling to server.py
+ * Update server.py to use the imageapp provide
+ * Updated the index page of the image app to display the latest image
