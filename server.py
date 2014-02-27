@@ -34,7 +34,6 @@ def getRequest(conn):
             break
         request += conn.recv(1)
 
-    print repr(request)
     return request
 
 
@@ -93,8 +92,6 @@ def createEnviron(conn):
         if environ['CONTENT_LENGTH'] != 0:
             environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(environ['CONTENT_LENGTH'])))
 
-        print request_body
-
         if 'content-type' in headerDict.keys():
             environ['CONTENT_TYPE'] = headerDict['content-type']
 
@@ -114,22 +111,6 @@ def handle_connection(conn):
     # request type and the requested folder
     headers_set = []
     headers_sent = []
-
-    def write(data):
-        out = StringIO.StringIO()
-        if not headers_set:
-            raise AssertionError("write() called before start_response()")
-        elif not headers_sent:
-            status, response_headers = headers_sent[:] = headers_set
-            out.write('HTTP/1.0 %s\r\n' % status)
-            for header in response_headers:
-                key, value = header
-                out.write('%s: %s\r\n' % (key, value))
-            out.write('\r\n')
-
-        out.write(data)
-        conn.send(out.getvalue())
-        out.close()
 
     def start_response(status, response_headers, exc_info=None):
         if exc_info:
