@@ -23,6 +23,9 @@ class FakeConnection(object):
         self.timeout = 0
         self.n_times_accept_called = 0
 
+    def getsockname(self):
+        return ("noclient", 32351)
+
     def bind(self, param):
         (host, port) = param
 

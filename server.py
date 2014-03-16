@@ -5,37 +5,35 @@ import time
 import urlparse
 import StringIO
 import sys
-from app import make_app
+# from app import make_app
+import imageapp
 import time
 from wsgiref.validate import validator
 
-# import quixote
-# from quixote.demo import create_publisher
+import quixote
+#from quixote.demo import create_publisher
 #from quixote.demo.mini_demo import create_publisher
 #from quixote.demo.altdemo import create_publisher
 
-# _the_app = None
-# def make_app():
-#     global _the_app
-#     if _the_app is None:
-#         p = create_publisher()
-#         _the_app = quixote.get_wsgi_app()
+_the_app = None
+def make_app():
+    global _the_app
+    if _the_app is None:
+        imageapp.setup()
+        p = imageapp.create_publisher()
+        _the_app = quixote.get_wsgi_app()
 
-#     return _the_app
+    return _the_app
 
 
 def getRequest(conn):
     request = ''
     while True:
         request_temp = ''
-        try:
-            conn.settimeout(2)
-            request_temp = conn.recv(2048)
-        except:
+        if request[-4:] == '\r\n\r\n':
             break
-        request += request_temp
-        if len(request_temp) < 2048:
-            break
+        request += conn.recv(1)
+
     return request
 
 
@@ -49,18 +47,19 @@ def createEnviron(conn):
     environ['QUERY_STRING'] = ''
     environ['CONTENT_LENGTH'] = '0'
     environ['CONTENT_TYPE'] = 'text/html'
-    environ['SERVER_NAME'] = ''
-    environ['SERVER_PORT'] = ''
-    environ['wsgi.version'] = ('',)
-    environ['wsgi.errors'] = StringIO.StringIO()
+    environ['SERVER_NAME'] = ("%s" % conn.getsockname()[0])
+    environ['SERVER_PORT'] = ("%d" % conn.getsockname()[1])
+    environ['wsgi.version'] = (1,0)
+    environ['wsgi.errors'] = sys.stderr
     environ['wsgi.multithread'] = 0
     environ['wsgi.multiprocess'] = 0
     environ['wsgi.run_once'] = 0
     environ['wsgi.url_scheme'] = 'http'
+
     
     request = getRequest(conn)
     if request != '':
-        request_headers, request_body = request.split('\r\n\r\n', 1)
+        request_headers, request_body = request.split('\r\n\r\n')
 
         headers_string = ''
         request_line = 0
@@ -90,10 +89,14 @@ def createEnviron(conn):
         if 'content-length' in headerDict.keys():
             environ['CONTENT_LENGTH'] = headerDict['content-length']
         
-        environ['wsgi.input'] = StringIO.StringIO(request_body)
+        if environ['CONTENT_LENGTH'] != 0:
+            environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(environ['CONTENT_LENGTH'])))
 
         if 'content-type' in headerDict.keys():
             environ['CONTENT_TYPE'] = headerDict['content-type']
+
+        if 'cookie' in headerDict.keys():
+            environ['HTTP_COOKIE'] = headerDict['cookie']
         
             
     return environ
@@ -109,20 +112,6 @@ def handle_connection(conn):
     headers_set = []
     headers_sent = []
 
-    def write(data):
-        out = StringIO.StringIO()
-        if not headers_set:
-            raise AssertionError("write() called before start_response()")
-        elif not headers_sent:
-            status, response_headers = headers_sent[:] = headers_set
-            out.write('HTTP/1.0 %s\r\n' % status)
-            for header in response_headers:
-                out.write('%s: %s\r\n' % header)
-            out.write('\r\n')
-
-        out.write(data)
-        conn.send(out.getvalue())
-
     def start_response(status, response_headers, exc_info=None):
         if exc_info:
             try:
@@ -136,20 +125,25 @@ def handle_connection(conn):
 
         headers_set[:] = [status, response_headers]
         headers_set[1].append(('Date', time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())))
-        return write
+
+        conn.send('HTTP/1.0 %s\r\n' % headers_set[0])
+
+        for header in headers_set[1]:
+            key, value = header
+            conn.send('%s, %s\r\n' % (key,value))
+
+        conn.send('\r\n')
 
     wsgi_app = make_app()
     environ = createEnviron(conn)
     result = wsgi_app(environ, start_response)
 
-    try:
-        for obj in result:
-            if obj:
-                write(obj)
-        if not headers_sent:
-            write('')
-    finally:
-        conn.close()
+    for obj in result:
+        if obj:
+            conn.send(obj)
+    conn.close()
+
+
 
 def main(socketmodule = None):
     if socketmodule is None:
