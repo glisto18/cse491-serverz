@@ -28,20 +28,4 @@
  * Implemented cookie handling to server.py
  * Update server.py to use the imageapp provide
  * Updated the index page of the image app to display the latest image
-=======
-2014-01-14 Justin Rucinski <rucins11@msu.edu>
 
- * Added http response and 'Hello, world' display to web server.
- 
-2014-01-22 Justin Rucinski <rucins11@msu.edu>
- 
- * Matched server.py to the solution provided by ctb
- 
-2014-01-22 Justin Rucinski <rucins11@msu.edu>
-
- * Completed hw2. Updated server.py, test_server.py
-
-2014-01-23 Daniel Roman <romanda1@msu.edu>
-
- * Cloned Justin's repository.
->>>>>>> f0618a0f39c17ced66537faaa83dcdc0997a32f0
