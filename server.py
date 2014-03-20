@@ -89,7 +89,7 @@ def createEnviron(conn):
         if 'content-length' in headerDict.keys():
             environ['CONTENT_LENGTH'] = headerDict['content-length']
         
-        if environ['CONTENT_LENGTH'] != 0:
+        if environ['CONTENT_LENGTH'] != '0':
             environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(environ['CONTENT_LENGTH'])))
 
         if 'content-type' in headerDict.keys():
