@@ -9,7 +9,7 @@ import sys
 import imageapp
 import time
 from wsgiref.validate import validator
-
+import argparse
 import quixote
 #from quixote.demo import create_publisher
 #from quixote.demo.mini_demo import create_publisher
@@ -22,6 +22,10 @@ def make_app():
         imageapp.setup()
         p = imageapp.create_publisher()
         _the_app = quixote.get_wsgi_app()
+    if _the_app is 'myapp':
+        app.make_app()
+    if _the_app is 'altdemo':
+        return ref-server()
 
     return _the_app
 
@@ -146,12 +150,29 @@ def handle_connection(conn):
 
 
 def main(socketmodule = None):
+
+    parser = argparse.ArgumentParser(description="Baby steps")
+    parser.add_argument('-A', dest='app_option', action='store', required=True, choices=['image', 'altdemo', 'myapp'])
+    parser.add_argument('-p', dest='port_pref', action='store', type=int, default=-1, choices=range(8000, 9999))
+    args = parser.parse_args()
+    print (args.app_option)
+    print (args.port_pref)
+
     if socketmodule is None:
         socketmodule = socket
+    if args.app_option is 'myapp':
+        _the_app = 'myapp'
+    if args.app_option is 'altdemo':
+        _the_app = 'altdemo'
 
     s = socketmodule.socket()         # Create a socket object
     host = socketmodule.getfqdn() # Get local machine name
-    port = random.randint(8000, 9999)
+
+    if(args.port_pref == -1):
+        port = random.randint(8000, 9999)
+    else:
+        port = args.port_pref
+
     s.bind((host, port))        # Bind to the port
 
     print 'Starting server on', host, port
