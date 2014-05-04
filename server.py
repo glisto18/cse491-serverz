@@ -1,43 +1,71 @@
 #!/usr/bin/env python
+
+import sys
+import os
 import random
 import socket
 import time
 import urlparse
 import StringIO
-import sys
-# from app import make_app
+import argparse
+
+import app
 import imageapp
-import time
+from django.core.wsgi import get_wsgi_application
 from wsgiref.validate import validator
 
 import quixote
-#from quixote.demo import create_publisher
-#from quixote.demo.mini_demo import create_publisher
-#from quixote.demo.altdemo import create_publisher
+from quixote.demo.altdemo import create_publisher
 
 _the_app = None
+_selected_app = None
+
 def make_app():
     global _the_app
+    global _selected_app
     if _the_app is None:
-        imageapp.setup()
-        p = imageapp.create_publisher()
-        _the_app = quixote.get_wsgi_app()
-
+        if _selected_app == 'image':
+            imageapp.setup()
+            p = imageapp.create_publisher()
+            _the_app = quixote.get_wsgi_app()
+        elif _selected_app == 'altdemo':
+            p = create_publisher()
+            _the_app = quixote.get_wsgi_app()
+        elif _selected_app == 'myapp':
+            _the_app = app.make_app()
+        elif _selected_app == 'django':
+            sys.path.append(os.path.join(os.path.dirname(__file__), 'imageappdjango'))
+            os.environ.setdefault("DJANGO_SETTINGS_MODULE", "imageappdjango.imageappdjango.settings-prod")
+            _the_app = get_wsgi_application()
+        else:
+            raise Exception("Invalid app selected")
     return _the_app
 
 
 def getRequest(conn):
     request = ''
     while True:
-        request_temp = ''
         if request[-4:] == '\r\n\r\n':
             break
         request += conn.recv(1)
 
     return request
 
+def handle_connection(conn):
+    def start_response(status, response_headers, exc_info=None):
+        if exc_info:
+            try:
+                raise exc_info[1].with_traceback(exc_info[2])
+            finally:
+                exc_info = None
 
-def createEnviron(conn):
+        conn.send('HTTP/1.0 %s\r\n' % status)
+
+        for header in response_headers:
+            key, value = header
+            conn.send('%s: %s\r\n' % (key,value))
+        conn.send('\r\n')
+
     environ = {}
     environ['REQUEST_METHOD'] = ''
     environ['PATH_INFO'] = ''
@@ -47,8 +75,8 @@ def createEnviron(conn):
     environ['QUERY_STRING'] = ''
     environ['CONTENT_LENGTH'] = '0'
     environ['CONTENT_TYPE'] = 'text/html'
-    environ['SERVER_NAME'] = ("%s" % conn.getsockname()[0])
-    environ['SERVER_PORT'] = ("%d" % conn.getsockname()[1])
+    environ['SERVER_NAME'] = "%s" % conn.getsockname()[0]
+    environ['SERVER_PORT'] = "%s" % conn.getsockname()[1]
     environ['wsgi.version'] = (1,0)
     environ['wsgi.errors'] = sys.stderr
     environ['wsgi.multithread'] = 0
@@ -56,115 +84,78 @@ def createEnviron(conn):
     environ['wsgi.run_once'] = 0
     environ['wsgi.url_scheme'] = 'http'
 
-    
     request = getRequest(conn)
     if request != '':
-        request_headers, request_body = request.split('\r\n\r\n')
+        request_line, headers_string = request.split('\r\n', 1)
+        environ['REQUEST_METHOD'], path, \
+          environ['SERVER_PROTOCOL'] = request_line.split(' ')
 
-        headers_string = ''
-        request_line = 0
-        try:
-            request_line, headers_string = request_headers.split('\r\n', 1)
-        except:
-            request_line = request_headers
-            headers_string = ''
+        path = urlparse.urlparse(path)
+        environ['PATH_INFO'] = path.path
+        environ['QUERY_STRING'] = path.query
 
-        environ['REQUEST_METHOD'], PATH, \
-        environ['SERVER_PROTOCOL'] = request_line.split(' ')
-
-        PATH = urlparse.urlparse(PATH)
-
-        environ['PATH_INFO'] = PATH.path
-        environ['QUERY_STRING'] = PATH.query
-        
-        headers = []
-        if headers_string != '':
+        if headers_string != '' and headers_string != '\r\n':
+            headers = []
             headers = headers_string.split('\r\n')
+            headersDictionary = {}
 
-        headerDict = {}
-        for line in headers:
-            k, v = line.split(': ', 1)
-            headerDict[k.lower()] = v
+            for line in headers:
+                if line != '':
+                    k, v = line.split(': ', 1)
+                    headersDictionary[k.lower()] = v
 
-        if 'content-length' in headerDict.keys():
-            environ['CONTENT_LENGTH'] = headerDict['content-length']
-        
-        if environ['CONTENT_LENGTH'] != 0:
-            environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(environ['CONTENT_LENGTH'])))
+            if 'content-length' in headersDictionary.keys():
+                environ['CONTENT_LENGTH'] = headersDictionary['content-length']
 
-        if 'content-type' in headerDict.keys():
-            environ['CONTENT_TYPE'] = headerDict['content-type']
+            if int(environ['CONTENT_LENGTH']) != 0:
+                environ['wsgi.input'] = StringIO.StringIO(conn.recv(int(environ['CONTENT_LENGTH'])))
 
-        if 'cookie' in headerDict.keys():
-            environ['HTTP_COOKIE'] = headerDict['cookie']
-        
-            
-    return environ
+            if 'content-type' in headersDictionary.keys():
+                environ['CONTENT_TYPE'] = headersDictionary['content-type']
 
-
-
-
-
-
-def handle_connection(conn):
-    # Get the request and split it to get the
-    # request type and the requested folder
-    headers_set = []
-    headers_sent = []
-
-    def start_response(status, response_headers, exc_info=None):
-        if exc_info:
-            try:
-                if headers_sent:
-                    print "here"
-                    raise exc_info[1].with_traceback(exc_info[2])
-            finally:
-                exc_info = None
-        elif headers_set:
-            raise AssertionError("Headers already set!")
-
-        headers_set[:] = [status, response_headers]
-        headers_set[1].append(('Date', time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())))
-
-        conn.send('HTTP/1.0 %s\r\n' % headers_set[0])
-
-        for header in headers_set[1]:
-            key, value = header
-            conn.send('%s, %s\r\n' % (key,value))
-
-        conn.send('\r\n')
+            if 'cookie' in headersDictionary.keys():
+                environ['HTTP_COOKIE'] = headersDictionary['cookie']
 
     wsgi_app = make_app()
-    environ = createEnviron(conn)
+    validator_app = validator(wsgi_app)
     result = wsgi_app(environ, start_response)
 
     for obj in result:
-        if obj:
-            conn.send(obj)
+        conn.send(obj)
+
+    result.close()
     conn.close()
 
-
-
 def main(socketmodule = None):
-    if socketmodule is None:
+    if socketmodule == None:
         socketmodule = socket
 
-    s = socketmodule.socket()         # Create a socket object
-    host = socketmodule.getfqdn() # Get local machine name
-    port = random.randint(8000, 9999)
-    s.bind((host, port))        # Bind to the port
+    global _selected_app
 
+    parser = argparse.ArgumentParser(description='Parse arguments for the apps')
+    parser.add_argument('-A', dest='application', nargs=1, choices=['image','altdemo','myapp','django'], required=True)
+    parser.add_argument('-p', dest='port', type=int, nargs=1)
+    args = parser.parse_args()
+    if not args.port:
+        port = random.randint(8000,9999)
+    else:
+        port = args.port[0]
 
-    print 'Starting server on', host, port
-    print 'The Web server URL for this would be http://%s:%d/' % (host, port)
+    _selected_app = args.application[0]
 
-    s.listen(5)                 # Now wait for client connection.
+    s = socketmodule.socket()
+    host = socketmodule.getfqdn()
+    s.bind((host,port))
+
+    print 'Start server on', host, port
+    print 'The server URL for this application would be http://%s:%s/' % (host,port)
+
+    s.listen(5)
 
     print 'Entering infinite loop; hit CTRL-C to exit'
     while True:
-        # Establish connection with client.    
         c, (client_host, client_port) = s.accept()
-        print 'Got connection from', client_host, client_port
+        print 'Receiving connection from', client_host, client_port
         handle_connection(c)
 
 if __name__ == '__main__':
